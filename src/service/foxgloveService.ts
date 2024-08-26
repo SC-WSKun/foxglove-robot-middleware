@@ -1,6 +1,7 @@
 import { FoxgloveClient, SubscriptionId } from '@foxglove/ws-protocol';
 import Debug from 'debug';
 import protobufjs from 'protobufjs';
+import { Command } from 'commander';
 import { FileDescriptorSet } from 'protobufjs/ext/descriptor';
 
 const log = Debug('foxglove: simple-client');
@@ -58,3 +59,8 @@ async function initClient(url: string) {
     });
   });
 }
+
+export default new Command("simple-client")
+  .description("connect to a server and subscribe to all messages")
+  .argument("[url]", "ws(s)://host:port", "ws://localhost:8765")
+  .action(initClient);
