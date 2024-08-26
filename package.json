@@ -26,6 +26,7 @@
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
+    "commander": "^12.1.0",
     "lodash": "^4.17.21",
     "protobufjs": "^7.4.0",
     "reflect-metadata": "^0.2.0",
