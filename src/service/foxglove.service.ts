@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Channel, FoxgloveClient, SubscriptionId } from '@foxglove/ws-protocol';
+import {
+  Channel,
+  ClientChannelWithoutId,
+  FoxgloveClient,
+  SubscriptionId,
+} from '@foxglove/ws-protocol';
 import Debug from 'debug';
 import { find } from 'lodash';
 const WebSocket = require('ws');
@@ -10,7 +15,8 @@ Debug.enable('foxglove:*');
 @Injectable()
 export class FoxgloveService {
   client: FoxgloveClient;
-  channels: Map<SubscriptionId, Channel> = new Map(); // Map of channels from server advertise
+  subChannels: Map<SubscriptionId, Channel> = new Map(); // Map of channels from server advertise
+  pubChannels: Map<string, ClientChannelWithoutId & { id: number }> = new Map(); // Map of channels from server advertise
   subs: Map<string, { subId: number; channelId: number }> = new Map();
   callbacks: { [key: number]: (timestamp: bigint, data: any) => void } = {}; // Array of subscriptions
   async initClient(url: string) {
@@ -37,9 +43,9 @@ export class FoxgloveService {
 
     this.client.on('advertise', (channels) => {
       for (const channel of channels) {
-        this.channels.set(channel.id, channel);
+        this.subChannels.set(channel.id, channel);
       }
-      console.log('server channels number:', this.channels.size);
+      console.log('server channels number:', this.subChannels.size);
     });
 
     this.client.on('message', ({ subscriptionId, timestamp, data }) => {
@@ -57,7 +63,7 @@ export class FoxgloveService {
       return Promise.reject('Client not initialized');
     }
 
-    const channel = find(Array.from(this.channels.values()), { topic });
+    const channel = find(Array.from(this.subChannels.values()), { topic });
     if (!channel) {
       return Promise.reject('Channel not found');
     }
@@ -70,6 +76,26 @@ export class FoxgloveService {
       channelId: channel.id,
     });
     return Promise.resolve(subId);
+  }
+
+  advertiseTopic(channel: ClientChannelWithoutId) {
+    if (!this.client) {
+      return Promise.reject('Client not initialized');
+    }
+    const channelId = this.client.advertise(channel);
+    this.pubChannels.set(channel.topic, { ...channel, id: channelId });
+    return Promise.resolve(channel.topic);
+  }
+
+  publishMessage(topic: string, message: any) {
+    if (!this.client) {
+      return Promise.reject('Client not initialized');
+    }
+    const channel = this.pubChannels.get(topic);
+    if (!channel) {
+      return Promise.reject('Channel not found');
+    }
+    //todo: 实现publishMessage
   }
 
   addHandler(topic: string, callback: (...args: any) => void) {
