@@ -1,3 +1,4 @@
 export class ActionDto {
-  topic: string;
+  action: string;
+  data: string;
 }

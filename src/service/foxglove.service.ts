@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Channel, FoxgloveClient, SubscriptionId } from '@foxglove/ws-protocol';
 import Debug from 'debug';
-import protobufjs from 'protobufjs';
-import { Command } from 'commander';
-import { FileDescriptorSet } from 'protobufjs/ext/descriptor';
+import { find } from 'lodash';
 const WebSocket = require('ws');
 
 const log = Debug('foxglove: simple-client');
@@ -12,7 +10,9 @@ Debug.enable('foxglove:*');
 @Injectable()
 export class FoxgloveService {
   client: FoxgloveClient;
-  channels: Map<SubscriptionId, Channel> = new Map();
+  channels: Map<SubscriptionId, Channel> = new Map(); // Map of channels from server advertise
+  subs: Map<string, { subId: number; channelId: number }> = new Map();
+  callbacks: { [key: number]: (timestamp: bigint, data: any) => void } = {}; // Array of subscriptions
   async initClient(url: string) {
     const address =
       url.startsWith('ws://') || url.startsWith('wss://') ? url : `ws://${url}`;
@@ -22,10 +22,12 @@ export class FoxgloveService {
       ws: new WebSocket(address, [FoxgloveClient.SUPPORTED_SUBPROTOCOL]),
     });
 
-    const deserializers = new Map();
-
     this.client.on('open', () => {
       log('Connected Successfully!');
+    });
+
+    this.client.on('close', () => {
+      log('Connection closed');
     });
 
     this.client.on('error', (error) => {
@@ -35,56 +37,55 @@ export class FoxgloveService {
 
     this.client.on('advertise', (channels) => {
       for (const channel of channels) {
-        if (channel.encoding === 'json') {
-          const textDecoder = new TextDecoder();
-          const subId = this.client.subscribe(channel.id);
-          deserializers.set(subId, (data) =>
-            JSON.parse(textDecoder.decode(data)),
-          );
-        } else if (channel.encoding === 'protobuf') {
-          const root = protobufjs.Root.fromDescriptor(
-            FileDescriptorSet.decode(Buffer.from(channel.schema, 'base64')),
-          );
-
-          const type = root.lookupType(channel.schemaName);
-
-          const subId = this.client.subscribe(channel.id);
-
-          deserializers.set(subId, (data) =>
-            type.decode(
-              new Uint8Array(data.buffer, data.byteOffset, data.byteLength),
-            ),
-          );
-        } else {
-          console.warn(`Unsupported encoding ${channel.encoding}`);
-        }
+        this.channels.set(channel.id, channel);
       }
+      console.log('server channels number:', this.channels.size);
     });
 
     this.client.on('message', ({ subscriptionId, timestamp, data }) => {
-      console.log({
-        subscriptionId,
-        timestamp,
-        data: deserializers.get(subscriptionId)!(data),
-      });
+      if (this.callbacks[subscriptionId]) {
+        log('Received message:', subscriptionId, timestamp, data);
+        this.callbacks[subscriptionId](timestamp, data);
+      } else {
+        log('No callback for subscriptionId:', subscriptionId);
+      }
     });
   }
 
   subscribeTopic(topic: string) {
-    if(!this.client) {
+    if (!this.client) {
       return Promise.reject('Client not initialized');
     }
-    const channel = _.find(Array.from(this.channels.values()), { topic })
+
+    const channel = find(Array.from(this.channels.values()), { topic });
     if (!channel) {
-      return Promise.reject('Channel not found')
+      return Promise.reject('Channel not found');
     }
 
-    const subId = state.client.subscribe(channel.id)
+    // Subscribe to the channel
+    const subId = this.client.subscribe(channel.id);
 
-    state.subs.push({
+    this.subs.set(topic, {
       subId,
-      channelId: channel.id
-    })
-    return Promise.resolve(subId)
+      channelId: channel.id,
+    });
+    return Promise.resolve(subId);
+  }
+
+  addHandler(topic: string, callback: (...args: any) => void) {
+    if (!this.client) {
+      log('foxglove client is not initialized');
+      return;
+    }
+    const channel = this.subs.get(topic);
+    if (!channel) {
+      log('Channel not found:', topic);
+      return;
+    }
+    if (this.callbacks[channel.subId]) {
+      log('Callback is already exist: ', topic);
+      return;
+    }
+    this.callbacks[channel.subId] = callback;
   }
 }
