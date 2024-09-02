@@ -5,8 +5,10 @@ import {
   FoxgloveClient,
   SubscriptionId,
 } from '@foxglove/ws-protocol';
+import { parse as parseMessageDefinition } from '@foxglove/rosmsg';
 import Debug from 'debug';
 import { find } from 'lodash';
+import { MessageWriter } from '@foxglove/rosmsg2-serialization';
 const WebSocket = require('ws');
 
 const log = Debug('foxglove: simple-client');
@@ -95,7 +97,12 @@ export class FoxgloveService {
     if (!channel) {
       return Promise.reject('Channel not found');
     }
-    //todo: 实现publishMessage
+    const parseDefinitions = parseMessageDefinition(channel.schema, {
+      ros2: true,
+    });
+    const writer = new MessageWriter(parseDefinitions);
+    const uint8Array = writer.writeMessage(message);
+    this.client.sendMessage(channel.id, uint8Array);
   }
 
   addHandler(topic: string, callback: (...args: any) => void) {
