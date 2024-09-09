@@ -1,3 +1,5 @@
+import { HunyuanMessage } from 'src/typing/global';
+
 const tencentcloud = require('tencentcloud-sdk-nodejs');
 
 const HunyuanClient = tencentcloud.hunyuan.v20230901.Client;
@@ -18,27 +20,14 @@ const clientConfig = {
 const client = new HunyuanClient(clientConfig);
 
 export class HunyuanService {
-  systemTemplate = [
-    {
-      Role: 'system',
-      Content: '你是一个叫“旺财”的AI助手机器人',
-    },
-  ];
-
-  async askHunYuan(message: string) {
-    const userMessage = [
-      {
-        Role: 'user',
-        Content: message,
-      },
-    ];
+  async askHunYuan(message: HunyuanMessage[]) {
     const params = {
       Model: 'hunyuan-role',
-      Messages: this.systemTemplate.concat(userMessage),
+      Messages: message,
       Stream: false,
     };
-    client.ChatCompletions(params).then(
-      async (res) => {
+    return client.ChatCompletions(params).then(
+      (res) => {
         if (typeof res.on === 'function') {
           // todo: 流式响应
           res.on('message', (message) => {
@@ -46,7 +35,7 @@ export class HunyuanService {
           });
         } else {
           // 非流式响应
-          console.log(res);
+          return res.Choices[0].Message;
         }
       },
       (err) => {
