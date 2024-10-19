@@ -1,12 +1,19 @@
 import { Module } from '@nestjs/common';
-import ActionController from './controller/action.controller';
-import { FoxgloveService } from './service/foxglove.service';
-import HunyuanController from './controller/hunyuan.controller';
-import { HunyuanService } from './service/hunyuan.service';
+import ActionController from './module/foxglove/action.controller';
+import { FoxgloveService } from './module/foxglove/foxglove.service';
+import HunyuanController from './module/hunyuan/hunyuan.controller';
+import { HunyuanService } from './module/hunyuan/hunyuan.service';
+import { ConfigModule } from '@nestjs/config';
+import { HunyuanModule } from './module/hunyuan/hunyuan.module';
 
 @Module({
-  imports: [],
-  controllers: [ActionController, HunyuanController],
-  providers: [FoxgloveService, HunyuanService],
+  imports: [
+    ConfigModule.forRoot({
+      load: [() => require('./config/hunyuan.json')],
+    }),
+    HunyuanModule,
+  ],
+  controllers: [ActionController],
+  providers: [FoxgloveService],
 })
 export class AppModule {}

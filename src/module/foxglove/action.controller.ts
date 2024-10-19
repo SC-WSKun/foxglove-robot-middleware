@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ActionDto } from 'src/dto/action.dto';
-import { FoxgloveService } from 'src/service/foxglove.service';
+import { ActionDto } from 'src/module/foxglove/action.dto';
+import { FoxgloveService } from 'src/module/foxglove/foxglove.service';
 import { TOPIC_LIST } from 'src/typing/topic';
 
 @Controller('action')

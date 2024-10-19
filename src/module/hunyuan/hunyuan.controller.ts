@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { UserMessageDto } from 'src/dto/hunyuan.dto';
-import { HunyuanService } from 'src/service/hunyuan.service';
+import { UserMessageDto } from 'src/module/hunyuan/hunyuan.dto';
+import { HunyuanService } from 'src/module/hunyuan/hunyuan.service';
 import { HunyuanMessage } from 'src/typing/global';
 
 @Controller('hunyuan')

@@ -24,6 +24,7 @@
     "@foxglove/rosmsg2-serialization": "^2.0.4",
     "@foxglove/ws-protocol": "^0.7.4",
     "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
     "commander": "^12.1.0",
