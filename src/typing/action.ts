@@ -1,1 +1,1 @@
-export const action = ['subscribeTopic', 'movingPrepare'];
+export const action = ['subscribeTopic', 'movingPrepare']

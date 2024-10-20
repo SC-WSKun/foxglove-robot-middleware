@@ -1,3 +1,3 @@
 export class UserMessageDto {
-  userMessage: string;
+  userMessage: string
 }

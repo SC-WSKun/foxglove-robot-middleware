@@ -1,13 +1,13 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ActionDto } from 'src/module/foxglove/action.dto';
-import { FoxgloveService } from 'src/module/foxglove/foxglove.service';
-import { TOPIC_LIST } from 'src/typing/topic';
+import { Body, Controller, Get, Post } from '@nestjs/common'
+import { ActionDto } from 'src/module/foxglove/action.dto'
+import { FoxgloveService } from 'src/module/foxglove/foxglove.service'
+import { TOPIC_LIST } from 'src/typing/topic'
 
 @Controller('action')
 class ActionController {
   callbacks = {
     [TOPIC_LIST.TF]: this.carPositionListener,
-  };
+  }
 
   constructor(private foxgloveService: FoxgloveService) {
     // foxgloveService.initClient('ws://10.3.51.225:8765');
@@ -15,7 +15,7 @@ class ActionController {
 
   @Get()
   async getAction() {
-    return [];
+    return []
   }
 
   // ActionDto:
@@ -25,15 +25,15 @@ class ActionController {
   playAction(@Body() robotAction: ActionDto) {
     switch (robotAction.action) {
       case 'subscribeTopic':
-        this.foxgloveService.subscribeTopic(robotAction.data);
-        break;
+        this.foxgloveService.subscribeTopic(robotAction.data)
+        break
       case 'movingPrepare':
         // 订阅TF
-        this.foxgloveService.subscribeTopic(TOPIC_LIST.TF);
+        this.foxgloveService.subscribeTopic(TOPIC_LIST.TF)
         this.foxgloveService.addHandler(
           TOPIC_LIST.TF,
           this.callbacks[TOPIC_LIST.TF],
-        );
+        )
         // 发布移动Topic
         this.foxgloveService.advertiseTopic({
           encoding: 'cdr',
@@ -42,26 +42,26 @@ class ActionController {
           schemaEncoding: 'ros2msg',
           schemaName: 'geometry_msgs/msg/Twist',
           topic: TOPIC_LIST.MOVE,
-        });
-        break;
+        })
+        break
       case 'moving':
         this.foxgloveService.publishMessage(
           TOPIC_LIST.MOVE,
           JSON.parse(robotAction.data),
-        );
-        break;
+        )
+        break
     }
 
     //...
     return {
       errCode: 0,
       action: robotAction,
-    };
+    }
   }
 
   carPositionListener(timestamp: bigint, data: any) {
-    console.log('timestamp: ', timestamp, 'data: ', data);
+    console.log('timestamp: ', timestamp, 'data: ', data)
   }
 }
 
-export default ActionController;
+export default ActionController
