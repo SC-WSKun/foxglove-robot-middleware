@@ -1,5 +1,5 @@
 import { HunyuanMessage } from 'src/typing/global'
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 const tencentcloud = require('tencentcloud-sdk-nodejs')
 import { ConfigService } from '@nestjs/config'
 
