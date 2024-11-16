@@ -2,12 +2,14 @@ import { HunyuanMessage } from 'src/typing/global'
 import { Injectable, Logger } from '@nestjs/common'
 const tencentcloud = require('tencentcloud-sdk-nodejs')
 import { ConfigService } from '@nestjs/config'
+import { generateRandomString32 } from 'src/utils/util'
 
 const HunyuanClient = tencentcloud.hunyuan.v20230901.Client
-
+const TtsClient = tencentcloud.tts.v20190823.Client
 @Injectable()
 export class HunyuanService {
   private client: any // HunyuanClient 类型应根据你所使用的 SDK 来定义
+  private ttsClient: any
   private readonly logger = new Logger(HunyuanService.name)
 
   constructor(private configService: ConfigService) {
@@ -32,10 +34,26 @@ export class HunyuanService {
     // 创建 HunyuanClient 实例)
     this.client = new HunyuanClient(clientConfig)
     this.logger.log('--- hunyuan client init ---')
+
+    // 创建ttsConfig
+    const ttsClientConfig = {
+      credential: {
+        secretId: this.configService.get<string>('TENCENT_CLOUD_SECRET_ID'),
+        secretKey: this.configService.get<string>('TENCENT_CLOUD_SECRET_KEY'),
+      },
+      region: 'ap-guangzhou',
+      profile: {
+        httpProfile: {
+          endpoint: 'tts.tencentcloudapi.com',
+        },
+      },
+    }
+    this.ttsClient = new TtsClient(ttsClientConfig)
   }
 
   async askHunYuan(message: HunyuanMessage[]) {
     this.logger.log('--- start ask hunyuan ---')
+    this.logger.log('message:', message)
     const params = {
       Model: 'hunyuan-role',
       Messages: message,
@@ -57,5 +75,15 @@ export class HunyuanService {
         console.error('error', err)
       },
     )
+  }
+
+  async answerToSound(answer: string) {
+    this.logger.log('--- start tts ---')
+    const ttsParam = {
+      Text: answer,
+      SessionId: generateRandomString32(), // 用于唯一标识一个请求的会话 ID
+      ModelType: 1, // 默认值 1，表示语音合成的模式
+    }
+    return this.ttsClient.TextToVoice(ttsParam)
   }
 }

@@ -33,7 +33,7 @@
     "protobufjs": "^7.4.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "tencentcloud-sdk-nodejs": "^4.0.928",
+    "tencentcloud-sdk-nodejs": "^4.0.972",
     "ws": "^8.18.0"
   },
   "devDependencies": {
