@@ -8,7 +8,7 @@ import {
   Post,
 } from '@nestjs/common'
 import { FoxgloveService } from 'src/module/foxglove/foxglove.service'
-import { Move } from 'src/typing/action'
+import { Move, RobotSpeed } from 'src/typing/action'
 import { RobotService } from './robot.service'
 import to from 'await-to-js'
 
@@ -26,9 +26,9 @@ class ActionController {
   }
 
   @Post('move')
-  async robotMoving(@Body() move: Move) {
+  async robotMoving(@Body() robotSpeed: RobotSpeed) {
     this.logger.log('--- start robot moving ---')
-    const [err, result] = await to(this.robotService.startMoving(move))
+    const [err, result] = await to(this.robotService.startMoving(robotSpeed))
     if (err) {
       this.logger.error('move fail')
       throw BadGatewayException

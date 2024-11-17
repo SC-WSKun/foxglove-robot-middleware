@@ -38,17 +38,17 @@ export class FoxgloveService {
     })
 
     this.client.on('open', () => {
-      this.logger.log('Connected Successfully!')
+      this.logger.log('FoxgloveClient Connected Successfully!')
       this.connected = true
     })
 
     this.client.on('close', () => {
-      this.logger.log('Connection closed')
+      this.logger.log('FoxgloveCLient Connection closed')
       this.connected = false
     })
 
     this.client.on('error', error => {
-      this.logger.log('ws client error', error)
+      this.logger.log('FoxgloveClient error', error)
       throw error
     })
 
@@ -63,7 +63,7 @@ export class FoxgloveService {
       if (this.callbacks[subscriptionId]) {
         this.callbacks[subscriptionId](timestamp, data)
       } else {
-        this.logger.log('No callback for subscriptionId:', subscriptionId)
+        this.logger.log(`No callback for subscriptionId: ${subscriptionId}`)
       }
     })
   }
@@ -110,8 +110,8 @@ export class FoxgloveService {
 
   publishMessage(topic: string, message: any) {
     this.logger.log('--- start publish message ---')
-    this.logger.log(`public topic: ${topic}`)
-    this.logger.log(`public message: ${message}`)
+    this.logger.debug(`public topic: ${topic}`)
+    this.logger.debug(`public message: ${message}`)
     if (!this.client) {
       return Promise.reject('Client not initialized')
     }
@@ -168,22 +168,18 @@ export class FoxgloveService {
   formatAiAnswer(inputString: string) {
     this.logger.log('--- start format ai answer ---')
     this.logger.log('inputString:', inputString)
-    // 使用正则提取“回答”和“指令”
-    const answerRegex = /#回答：([^#]+)/
-    const commandRegex = /#指令：(\[.*\])/
-
-    // 提取回答和指令
-    const speech = (inputString.match(answerRegex) || [])[1]?.trim() || ''
-    const commandString =
-      (inputString.match(commandRegex) || [])[1]?.trim() || '[]'
-
-    // 解析指令（数组格式）
-    const command = JSON.parse(commandString)
-    this.logger.log('解析解答:', speech)
-    this.logger.log('解析指令:', command)
-    return {
-      speech,
-      command,
+    try {
+      const { speech, command } = JSON.parse(inputString)
+      return {
+        speech,
+        command,
+      }
+    } catch (error) {
+      this.logger.error('json parse fail')
+      return {
+        speech: '',
+        command: [],
+      }
     }
   }
 }

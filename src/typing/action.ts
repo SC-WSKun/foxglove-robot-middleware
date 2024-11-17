@@ -1,8 +1,13 @@
 export const action = ['subscribeTopic', 'movingPrepare']
 
-export type Move = {
+export type RobotSpeed = {
   angularSpeed: number
   linearSpeed: number
+}
+
+export type Move = {
+  angular: number
+  linear: number
 }
 
 export type TargetPosition = {

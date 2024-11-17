@@ -1,11 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { FoxgloveService } from './foxglove.service'
-import { Move, Position } from 'src/typing/action'
+import { Move, Position, RobotSpeed } from 'src/typing/action'
 import to from 'await-to-js'
 import { quaternionToEuler } from 'src/utils/util'
+import { resolve } from 'path'
 
 @Injectable()
 export class RobotService {
+  private readonly logger = new Logger('RobotService')
+  private channels: Map<string, number> = new Map()
+  private odomToBaseFootprint: any
+  private tfMsgLimit: boolean = true
+
   constructor(private foxgloveService: FoxgloveService) {
     this.carPositionListener = this.carPositionListener.bind(this)
     this.startMoving = this.startMoving.bind(this)
@@ -13,7 +19,7 @@ export class RobotService {
     const that = this
     function subInitTopic() {
       if (that.foxgloveService.connected) {
-        that.logger.log('ws connected')
+        that.logger.log('start init topics')
         that.subTfTopic()
         that.advMoveTopic()
       } else {
@@ -24,10 +30,6 @@ export class RobotService {
     }
     subInitTopic()
   }
-  private readonly logger = new Logger('RobotService')
-  private channels: Map<string, number> = new Map()
-  private odomToBaseFootprint: any
-  private tfMsgLimit: boolean = true
 
   /**
    * subscribe tf topic
@@ -44,6 +46,11 @@ export class RobotService {
       })
   }
 
+  /**
+   * handler of tf message
+   * @param timestamp
+   * @param tf message
+   */
   carPositionListener(timestamp: number, data: DataView) {
     const parseData: any = this.foxgloveService.readMsgWithSubId('/tf', data)
     if (
@@ -103,7 +110,7 @@ export class RobotService {
     }
   }
 
-  startMoving({ angularSpeed, linearSpeed }: Move) {
+  startMoving({ angularSpeed, linearSpeed }: RobotSpeed) {
     this.logger.log(
       `robot run with angularSpeed: ${angularSpeed} and linearSpeed: ${linearSpeed}`,
     )
@@ -120,13 +127,16 @@ export class RobotService {
     })
   }
 
-  moveToAngular(angular: number) {
+  async moveToAngular(angular: number) {
     this.logger.log('--- start moving to angular ---')
     this.logger.log(`angular: ${angular}`)
     const that = this
     if (angular === 0) {
       return Promise.resolve(true)
     }
+    // 这里有个很蠢的地方，混元返回的符号是相反的，所以这里向左为负，向右为正
+    // 为什么不改prompt呢，因为一改就不会按照设定的json格式返回了。。
+    angular = -angular
 
     let angularSpeed = 0
 
@@ -225,8 +235,22 @@ export class RobotService {
     })
   }
 
-  handleMoveCommand(command: string) {
+  async handleMoveCommand(command: Move[]) {
     this.logger.log('--- start handle move command ---')
     this.logger.debug('command:', command)
+    const that = this
+    try {
+      for (let move of command) {
+        if (move.angular) {
+          await that.moveToAngular(move.angular)
+        }
+        if (move.linear) {
+          await that.moveToLinear(move.linear)
+        }
+      }
+      return Promise.resolve('success')
+    } catch (error) {
+      return Promise.reject('command format error')
+    }
   }
 }
