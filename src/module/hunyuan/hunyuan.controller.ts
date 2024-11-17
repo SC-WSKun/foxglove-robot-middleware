@@ -4,6 +4,7 @@ import { HunyuanService } from 'src/module/hunyuan/hunyuan.service'
 import { HunyuanMessage } from 'src/typing/global'
 import to from 'await-to-js'
 import { FoxgloveService } from '../foxglove/foxglove.service'
+import { RobotService } from '../foxglove/robot.service'
 
 @Controller('hunyuan')
 class HunyuanController {
@@ -12,6 +13,7 @@ class HunyuanController {
   constructor(
     private hunyuanService: HunyuanService,
     private foxgloveService: FoxgloveService,
+    private robotService: RobotService,
   ) {
     // 初始化人设
     this.messages.push({
@@ -40,12 +42,14 @@ class HunyuanController {
     let { speech, command } = this.foxgloveService.formatAiAnswer(
       answer.Content,
     )
-    if (speech) {
-    } else {
+    if (!speech) {
       speech = '旺财听不太懂你在说什么，请重新说一次吧'
     }
+    if (command) {
+      this.robotService.handleMoveCommand(command)
+    }
     this.logger.log('messages:', this.messages)
-    return answer.speech
+    return speech
   }
 
   @Post('tts')
@@ -55,7 +59,7 @@ class HunyuanController {
     if (err) {
       this.logger.error('test error:', err)
     }
-    this.logger.log('tts result:', answer)
+    this.logger.log(`tts complete`)
     return answer
   }
 }

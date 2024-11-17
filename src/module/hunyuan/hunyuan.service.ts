@@ -53,7 +53,7 @@ export class HunyuanService {
 
   async askHunYuan(message: HunyuanMessage[]) {
     this.logger.log('--- start ask hunyuan ---')
-    this.logger.log('message:', message)
+    this.logger.log('question:', message)
     const params = {
       Model: 'hunyuan-role',
       Messages: message,
