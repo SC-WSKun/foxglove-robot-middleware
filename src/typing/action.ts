@@ -27,3 +27,16 @@ export type Quaternion = {
   y: number
   z: number
 }
+
+export type NavTranslation = {
+  x: number
+  y: number
+  z: number
+} | null
+
+export type NavRotation = {
+  x: number
+  y: number
+  z: number
+  w: number
+} | null

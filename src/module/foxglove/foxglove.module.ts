@@ -4,6 +4,7 @@ import { FoxgloveService } from './foxglove.service'
 import { RobotService } from './robot.service'
 import { ConfigModule } from '@nestjs/config'
 import { resolve } from 'path'
+import { NavigationService } from './navigation.service'
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -11,7 +12,7 @@ import { resolve } from 'path'
     }),
   ],
   controllers: [ActionController],
-  providers: [FoxgloveService, RobotService],
+  providers: [FoxgloveService, RobotService, NavigationService],
   exports: [FoxgloveService, RobotService],
 })
 export class FoxgloveModule {}

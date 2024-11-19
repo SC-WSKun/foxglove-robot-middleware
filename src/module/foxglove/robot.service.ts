@@ -19,7 +19,6 @@ export class RobotService {
     const that = this
     function subInitTopic() {
       if (that.foxgloveService.connected) {
-        that.logger.log('start init topics')
         that.subTfTopic()
         that.advMoveTopic()
       } else {
@@ -38,6 +37,7 @@ export class RobotService {
     this.foxgloveService
       .subscribeTopic('/tf')
       .then((subId: number) => {
+        this.logger.log('subscribe tf topic success')
         this.channels.set('/tf', subId)
         this.foxgloveService.addHandler('/tf', this.carPositionListener)
       })
@@ -103,10 +103,10 @@ export class RobotService {
       this.foxgloveService.advertiseTopic(moveTopicConfig),
     )
     if (err) {
-      this.logger.error('advertise topic fail:', err)
+      this.logger.error('advertise move topic fail:', err)
     }
     if (result) {
-      this.logger.log(`advertise topic success: ${result}`)
+      this.logger.log(`advertise move topic success: ${result}`)
     }
   }
 
@@ -120,6 +120,9 @@ export class RobotService {
     })
   }
 
+  /**
+   * let the robot stop
+   */
   stopMoving() {
     this.foxgloveService.publishMessage('/cmd_vel', {
       linear: { x: 0.0, y: 0.0, z: 0.0 },
