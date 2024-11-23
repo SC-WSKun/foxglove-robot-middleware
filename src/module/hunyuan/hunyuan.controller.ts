@@ -65,23 +65,19 @@ class HunyuanController {
     const labelMessages = []
     if (labelMessages.length === 0) {
       // eslint-disable-next-line prefer-const
-      let { result, labels } = await this.foxgloveService.callService(
-        '/label_manager/get_labels',
-        {
-          frame_id: 'jidi',
-        },
+      let [err, res] = await to(
+        this.foxgloveService.callService('/label_manager/get_labels', {}),
       )
-      if (result !== true) {
+      if (err || res.result !== true) {
         this.logger.error(`获取标签失败`)
         throw BadGatewayException
       }
-      labels = labels.map(label => label.label_name)
+      const labels = res.labels.map(label => label.label_name)
       this.logger.log(`current labels: ${JSON.stringify(labels)}`)
       labelMessages.push({
         Role: 'system',
-        Content: `你是一个叫“旺财”的AI助手机器人，你可以对于用户的提问，你会尽力回答，同时你具有移动到指定标签的功能，你需要根据我的提问找到对应目标的标签名。\
-      现在我们有以下标签：${JSON.stringify(labels)}\
-      你的回答只是一个JSON对象，不需要有其它东西，其中speech是你要回复的内容；command是你需要执行的指令参数，其中label_name是我让你去的标签的名字，格式如下：\
+        Content: `你是一个叫“旺财”的AI助手机器人，你可以对于用户的提问，你会尽力回答，同时你具有移动到指定标签的功能，现在我们有以下标签：${JSON.stringify(labels)}，你需要根据我的提问找到对应的标签名。\
+      你的回答只有是一个JSON对象，不需要有其它东西。其中speech是你要回复的内容；command是你需要执行的指令参数，其中label_name是我提问对应的前面提到标签的名字，格式如下：\
       { "speech":"", "command":{"label_name":""} }`,
       })
     }

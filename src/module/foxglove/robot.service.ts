@@ -262,11 +262,9 @@ export class RobotService {
 
   async handleLabelCommand(command: { label_name: string }) {
     this.logger.log('--- start handle label command ---')
+    const label_name = new TextEncoder().encode(command.label_name).toString()
     const [err, result] = await to(
-      this.navigationService.publishMarkingNavigation(
-        'zhanshi',
-        command.label_name,
-      ),
+      this.navigationService.publishMarkingNavigation('jidi', label_name),
     )
     if (err) {
       this.logger.error('publish marking navigation fail:', err)
