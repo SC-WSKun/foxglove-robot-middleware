@@ -12,6 +12,7 @@ export class NavigationService {
     function subInitTopic() {
       if (that.foxgloveService.connected) {
         that.advNavigationTopic()
+        that.advLabelNavigationTopic()
       } else {
         setTimeout(() => {
           subInitTopic()
@@ -21,6 +22,7 @@ export class NavigationService {
     subInitTopic()
   }
 
+  // 发布导航Topic
   async advNavigationTopic() {
     // if (this.panzoomIns) this.pzRemoveListener()
     // this.navAddListener()
@@ -61,5 +63,50 @@ export class NavigationService {
         orientation,
       },
     })
+  }
+
+  // 发布导航Topic
+  async advLabelNavigationTopic() {
+    // if (this.panzoomIns) this.pzRemoveListener()
+    // this.navAddListener()
+    const [err, result] = await to(
+      this.foxgloveService.advertiseTopic({
+        encoding: 'cdr',
+        schema:
+          'std_msgs/Header header\nstring label_name\n================================================================================\nMSG: std_msgs/Header\n# Standard metadata for higher-level stamped data types.\n# This is generally used to communicate timestamped data\n# in a particular coordinate frame.\n\n# Two-integer timestamp that is expressed as seconds and nanoseconds.\nbuiltin_interfaces/Time stamp\n\n# Transform frame with which this data is associated.\nstring frame_id\n\n================================================================================\nMSG: builtin_interfaces/Time\n# This message communicates ROS Time defined here:\n# https://design.ros2.org/articles/clock_and_time.html\n\n# The seconds component, valid over all int32 values.\nint32 sec\n\n# The nanoseconds component, valid in the range [0, 1e9).\nuint32 nanosec\n',
+        schemaEncoding: 'ros2msg',
+        schemaName: 'goal_pose_label/msg/LabelGoalPose',
+        topic: '/label_manager/label_goal_pose',
+      }),
+    )
+    if (err) {
+      this.logger.error(`advertise navigation topic error:${err}`)
+    } else {
+      this.logger.log(`advertise navigation topic success:${result}`)
+    }
+  }
+
+  // 发送标签导航信息
+  async publishMarkingNavigation(frame_id: string, label_name: string) {
+    this.logger.log('--- start navigation to label ---')
+    const [err, result] = await to(
+      this.foxgloveService.publishMessage('/label_manager/label_goal_pose', {
+        header: {
+          seq: this.goalSeq++,
+          stamp: {
+            secs: Math.floor(Date.now() / 1000),
+            nsecs: (Date.now() / 1000) * 1000000,
+          },
+          frame_id,
+        },
+        label_name,
+      }),
+    )
+    if (err) {
+      this.logger.error(`navigate to label fail:${err}`)
+      return Promise.reject(err)
+    } else {
+      return Promise.resolve(result)
+    }
   }
 }

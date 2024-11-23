@@ -9,3 +9,8 @@ export class NavigationDto {
   orientation: NavRotation
   frame_id: string
 }
+
+export class LabelDto {
+  label_name: string
+  frame_id: string
+}

@@ -4,6 +4,7 @@ import { HunyuanService } from './hunyuan.service'
 import { ConfigModule } from '@nestjs/config'
 import { resolve } from 'path'
 import { FoxgloveModule } from '../foxglove/foxglove.module'
+
 @Module({
   imports: [
     ConfigModule.forRoot({

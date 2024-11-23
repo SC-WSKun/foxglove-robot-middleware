@@ -1,23 +1,15 @@
 import {
   BadGatewayException,
-  BadRequestException,
   Body,
   Controller,
-  Get,
   Logger,
   Post,
 } from '@nestjs/common'
-import { FoxgloveService } from 'src/module/foxglove/foxglove.service'
-import {
-  Move,
-  NavRotation,
-  NavTranslation,
-  RobotSpeed,
-} from 'src/typing/action'
+import { RobotSpeed } from 'src/typing/action'
 import { RobotService } from './robot.service'
 import to from 'await-to-js'
 import { NavigationService } from './navigation.service'
-import { NavigationDto } from './action.dto'
+import { NavigationDto, LabelDto } from './action.dto'
 
 @Controller('action')
 class ActionController {
@@ -26,11 +18,6 @@ class ActionController {
     private robotService: RobotService,
     private navigationService: NavigationService,
   ) {}
-
-  @Get()
-  async getAction() {
-    return []
-  }
 
   @Post('move')
   async robotMoving(@Body() robotSpeed: RobotSpeed) {
@@ -73,6 +60,23 @@ class ActionController {
   ) {
     const { position, orientation, frame_id } = navigationDto
     this.navigationService.publishNavigation(position, orientation, frame_id)
+  }
+
+  @Post('navigation/label')
+  async navigateToLabel(
+    @Body()
+    labelDto: LabelDto,
+  ) {
+    const { frame_id, label_name } = labelDto
+    const [err, result] = await to(
+      this.navigationService.publishMarkingNavigation(frame_id, label_name),
+    )
+    if (err) {
+      this.logger.error(`label navigation fail: ${err}`)
+      throw BadGatewayException
+    }
+    this.logger.log(`label navigation success: ${result}`)
+    return result
   }
 }
 

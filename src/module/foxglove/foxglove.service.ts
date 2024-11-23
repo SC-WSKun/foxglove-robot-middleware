@@ -133,7 +133,7 @@ export class FoxgloveService {
   publishMessage(topic: string, message: any) {
     this.logger.log('--- start publish message ---')
     this.logger.debug(`public topic: ${topic}`)
-    this.logger.debug(`public message: ${message}`)
+    this.logger.debug(`public message: ${JSON.stringify(message)}`)
     if (!this.client) {
       return Promise.reject('Client not initialized')
     }
