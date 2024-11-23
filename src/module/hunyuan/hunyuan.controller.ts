@@ -1,4 +1,11 @@
-import { Body, Controller, Logger, Post, Req } from '@nestjs/common'
+import {
+  BadGatewayException,
+  Body,
+  Controller,
+  Logger,
+  Post,
+  Req,
+} from '@nestjs/common'
 import { UserMessageDto } from 'src/module/hunyuan/hunyuan.dto'
 import { HunyuanService } from 'src/module/hunyuan/hunyuan.service'
 import { HunyuanMessage } from 'src/typing/global'
@@ -50,6 +57,55 @@ class HunyuanController {
       this.robotService.handleMoveCommand(command)
     }
     this.logger.log('messages:', messages)
+    return speech
+  }
+
+  @Post('label')
+  async getLabelMessage(@Body() labelMessageDto) {
+    const labelMessages = []
+    if (labelMessages.length === 0) {
+      // eslint-disable-next-line prefer-const
+      let { result, labels } = await this.foxgloveService.callService(
+        '/label_manager/get_labels',
+        {
+          frame_id: 'jidi',
+        },
+      )
+      if (result !== true) {
+        this.logger.error(`获取标签失败`)
+        throw BadGatewayException
+      }
+      labels = labels.map(label => label.label_name)
+      this.logger.log(`current labels: ${JSON.stringify(labels)}`)
+      labelMessages.push({
+        Role: 'system',
+        Content: `你是一个叫“旺财”的AI助手机器人，你可以对于用户的提问，你会尽力回答，同时你具有移动到指定标签的功能，你需要根据我的提问找到对应目标的标签名。\
+      现在我们有以下标签：${JSON.stringify(labels)}\
+      你的回答只是一个JSON对象，不需要有其它东西，其中speech是你要回复的内容；command是你需要执行的指令参数，其中label_name是我让你去的标签的名字，格式如下：\
+      { "speech":"", "command":{"label_name":""} }`,
+      })
+    }
+    labelMessages.push({
+      Role: 'user',
+      Content: labelMessageDto.userMessage,
+    })
+    const [err, answer] = await to(
+      this.hunyuanService.askHunYuan(labelMessages),
+    )
+    if (err) {
+      this.logger.error('askHunyuan error:', err)
+      throw BadGatewayException
+    }
+    // eslint-disable-next-line prefer-const
+    let { speech, command } = this.foxgloveService.formatAiAnswer(
+      answer.Content,
+    )
+    if (!speech) {
+      speech = '旺财听不懂你在说什么，请重新说一次吧'
+    }
+    if (command) {
+      this.robotService.handleLabelCommand(command)
+    }
     return speech
   }
 

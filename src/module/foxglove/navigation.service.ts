@@ -65,7 +65,7 @@ export class NavigationService {
     })
   }
 
-  // 发布导航Topic
+  // 发布标签导航Topic
   async advLabelNavigationTopic() {
     // if (this.panzoomIns) this.pzRemoveListener()
     // this.navAddListener()

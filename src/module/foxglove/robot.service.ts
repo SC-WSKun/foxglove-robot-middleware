@@ -3,7 +3,7 @@ import { FoxgloveService } from './foxglove.service'
 import { Move, Position, RobotSpeed } from 'src/typing/action'
 import to from 'await-to-js'
 import { quaternionToEuler } from 'src/utils/util'
-import { resolve } from 'path'
+import { NavigationService } from './navigation.service'
 
 @Injectable()
 export class RobotService {
@@ -12,7 +12,10 @@ export class RobotService {
   private odomToBaseFootprint: any
   private tfMsgLimit: boolean = true
 
-  constructor(private foxgloveService: FoxgloveService) {
+  constructor(
+    private foxgloveService: FoxgloveService,
+    private navigationService: NavigationService,
+  ) {
     this.carPositionListener = this.carPositionListener.bind(this)
     this.startMoving = this.startMoving.bind(this)
     this.stopMoving = this.stopMoving.bind(this)
@@ -253,7 +256,23 @@ export class RobotService {
       }
       return Promise.resolve('success')
     } catch (error) {
-      return Promise.reject('command format error')
+      return Promise.reject('command execute error')
     }
+  }
+
+  async handleLabelCommand(command: { label_name: string }) {
+    this.logger.log('--- start handle label command ---')
+    const [err, result] = await to(
+      this.navigationService.publishMarkingNavigation(
+        'zhanshi',
+        command.label_name,
+      ),
+    )
+    if (err) {
+      this.logger.error('publish marking navigation fail:', err)
+      return Promise.reject('command execute error')
+    }
+    this.logger.log(`publish marking navigation success: ${result}`)
+    return Promise.resolve('success')
   }
 }
