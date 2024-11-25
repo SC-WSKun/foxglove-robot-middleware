@@ -89,8 +89,9 @@ export class NavigationService {
   // 发送标签导航信息
   async publishMarkingNavigation(frame_id: string, label_name: string) {
     this.logger.log('--- start navigation to label ---')
-    const [err, result] = await to(
-      this.foxgloveService.publishMessage('/label_manager/label_goal_pose', {
+    label_name = new TextEncoder().encode(label_name).toString()
+    const [err, res] = await to(
+      this.foxgloveService.callService('/label_manager/label_goal_pose', {
         header: {
           seq: this.goalSeq++,
           stamp: {
@@ -102,11 +103,11 @@ export class NavigationService {
         label_name,
       }),
     )
-    if (err) {
+    if (err || res.result !== true) {
       this.logger.error(`navigate to label fail:${err}`)
       return Promise.reject(err)
     } else {
-      return Promise.resolve(result)
+      return Promise.resolve(res)
     }
   }
 }
