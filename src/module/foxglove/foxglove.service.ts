@@ -18,6 +18,7 @@ const WebSocket = require('ws')
 @Injectable()
 export class FoxgloveService {
   connected: boolean = false
+  connecting: boolean = false
   client: FoxgloveClient
   subChannels: Map<SubscriptionId, Channel> = new Map() // Map of channels from server advertise
   pubChannels: Map<string, ClientChannelWithoutId & { id: number }> = new Map() // Map of channels from server advertise
@@ -37,7 +38,6 @@ export class FoxgloveService {
     const address =
       url.startsWith('ws://') || url.startsWith('wss://') ? url : `ws://${url}`
     this.logger.log(`Client connecting to ${address}`)
-
     this.client = new FoxgloveClient({
       ws: new WebSocket(address, [FoxgloveClient.SUPPORTED_SUBPROTOCOL]),
     })
@@ -49,6 +49,7 @@ export class FoxgloveService {
 
     this.client.on('close', () => {
       this.logger.log('FoxgloveCLient Connection closed')
+      this.connecting = false
       this.connected = false
 
       // 重新连接
@@ -57,6 +58,7 @@ export class FoxgloveService {
 
     this.client.on('error', error => {
       this.logger.log('FoxgloveClient error', error)
+      this.connecting = false
       // 重新连接
       this.retryConnection(address)
     })
@@ -265,8 +267,11 @@ export class FoxgloveService {
    */
   private retryConnection(url: string) {
     setTimeout(() => {
-      this.logger.log('--- start retry connection ---')
-      this.initClient(url)
+      if (!this.connecting) {
+        this.connecting = true
+        this.logger.log('--- start retry connection ---')
+        this.initClient(url)
+      }
     }, 10000)
   }
 }
