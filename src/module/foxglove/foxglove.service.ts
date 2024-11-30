@@ -50,11 +50,15 @@ export class FoxgloveService {
     this.client.on('close', () => {
       this.logger.log('FoxgloveCLient Connection closed')
       this.connected = false
+
+      // 重新连接
+      this.retryConnection(address)
     })
 
     this.client.on('error', error => {
       this.logger.log('FoxgloveClient error', error)
-      throw error
+      // 重新连接
+      this.retryConnection(address)
     })
 
     this.client.on('advertise', channels => {
@@ -254,5 +258,15 @@ export class FoxgloveService {
         command: [],
       }
     }
+  }
+
+  /**
+   * retry connection
+   */
+  private retryConnection(url: string) {
+    setTimeout(() => {
+      this.logger.log('--- start retry connection ---')
+      this.initClient(url)
+    }, 10000)
   }
 }
