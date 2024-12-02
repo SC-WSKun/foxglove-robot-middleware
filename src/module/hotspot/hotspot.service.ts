@@ -7,7 +7,7 @@ export class HotSpotService {
     // 使用nmcli获取wifi列表
     return new Promise((resolve, reject) => {
       const command =
-        'nmcli -t -f ssid,bssid,strength,mode,chan,rate,signal,security dev wifi list'
+        'nmcli -t -f ssid dev wifi list'
       exec(command, (error, stdout, stderr) => {
         if (error) {
           reject(error)

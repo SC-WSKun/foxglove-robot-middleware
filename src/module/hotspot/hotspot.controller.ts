@@ -10,6 +10,7 @@ export class HotSpotController {
   async getHotspot() {
     const [err, result] = await to(this.hotSpotService.getWiFiList())
     if (err) {
+      this.logger.error(`get hotspot fail: ${err}`)
       throw BadGatewayException
     } else {
       return result
