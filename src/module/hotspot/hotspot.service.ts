@@ -16,4 +16,16 @@ export class HotSpotService {
       })
     })
   }
+
+  connectHotspot(ssid: string, password: string) {
+    return new Promise((resolve, reject)=>{
+      const command = `sudo nmcli dev wifi connect ${ssid} password ${password}`
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          reject(error)
+        }
+        resolve(stdout)
+      })
+    })
+  }
 }
