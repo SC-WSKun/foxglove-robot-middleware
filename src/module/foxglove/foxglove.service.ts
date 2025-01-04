@@ -200,7 +200,7 @@ export class FoxgloveService {
    * @param payload request params
    * @returns a promise wait for the response
    */
-  callService(srvName: string, payload: { [key: string]: any }): Promise<any> {
+  callService(srvName: string, payload?: { [key: string]: any }): Promise<any> {
     if (!this.client) {
       return Promise.reject('Client not initialized!')
     }
