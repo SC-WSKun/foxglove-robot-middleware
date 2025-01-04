@@ -7,8 +7,10 @@
 3. hunyuan.module.ts引入了混元模型调用需要的信息，需要自行配置
 4. main.ts引入了session，需要在config中自行配置sessionSecret
 
-## 启动与部署
+## 本地调试
 ```
-npm install pm2 -g
-npm run build
+npm run start
 ```
+
+## API Doc
+链接: https://g6ce0748se.apifox.cn
