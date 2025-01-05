@@ -67,9 +67,9 @@ class ActionController {
     @Body()
     labelDto: LabelDto,
   ) {
-    const { frame_id, label_name } = labelDto
+    const { label_name } = labelDto
     const [err, result] = await to(
-      this.navigationService.publishMarkingNavigation(frame_id, label_name),
+      this.navigationService.publishMarkingNavigation(label_name),
     )
     if (err) {
       this.logger.error(`label navigation fail: ${err}`)

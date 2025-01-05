@@ -264,7 +264,7 @@ export class RobotService {
     this.logger.log('--- start handle label command ---')
     const label_name = new TextEncoder().encode(command.label_name).toString()
     const [err, result] = await to(
-      this.navigationService.publishMarkingNavigation('jidi', label_name),
+      this.navigationService.publishMarkingNavigation(label_name),
     )
     if (err) {
       this.logger.error('publish marking navigation fail:', err)

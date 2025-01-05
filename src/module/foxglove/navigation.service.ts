@@ -86,8 +86,13 @@ export class NavigationService {
     }
   }
 
-  // 发送标签导航信息
-  async publishMarkingNavigation(frame_id: string, label_name: string) {
+  /**
+   * 进行标签导航
+   * 这里frame_id恒为map
+   * @param label_name 
+   * @returns 
+   */
+  async publishMarkingNavigation(label_name: string) {
     this.logger.log('--- start navigation to label ---')
     label_name = new TextEncoder().encode(label_name).toString()
     const [err, res] = await to(
@@ -98,7 +103,7 @@ export class NavigationService {
             secs: Math.floor(Date.now() / 1000),
             nsecs: (Date.now() / 1000) * 1000000,
           },
-          frame_id,
+          frame_id: 'map',
         },
         label_name,
       }),
