@@ -12,7 +12,7 @@ export class NavigationService {
     function subInitTopic() {
       if (that.foxgloveService.connected) {
         that.advNavigationTopic()
-        that.advLabelNavigationTopic()
+        // that.advLabelNavigationTopic()
       } else {
         setTimeout(() => {
           subInitTopic()
