@@ -1,4 +1,4 @@
 export class HotspotDto {
-    ssid: string
-    password: string
+  ssid: string
+  password: string
 }

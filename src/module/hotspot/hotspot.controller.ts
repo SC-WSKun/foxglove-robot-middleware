@@ -1,4 +1,11 @@
-import { BadGatewayException, Controller, Get, Logger, Post , Body} from '@nestjs/common'
+import {
+  BadGatewayException,
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Body,
+} from '@nestjs/common'
 import to from 'await-to-js'
 import { HotSpotService } from 'src/module/hotspot/hotspot.service'
 import { HotspotDto } from './hotspot.dto'
@@ -22,9 +29,11 @@ export class HotSpotController {
   @Post()
   async connectHotspot(@Body() hotspotDto: HotspotDto) {
     this.logger.log('--- start connect hotspot ---')
-    const {ssid, password} = hotspotDto
-    const [err, result] = await to(this.hotSpotService.connectHotspot(ssid, password))
-    if(err){
+    const { ssid, password } = hotspotDto
+    const [err, result] = await to(
+      this.hotSpotService.connectHotspot(ssid, password),
+    )
+    if (err) {
       this.logger.error(`connect hotspot fail: ${err}`)
       throw BadGatewayException
     } else {

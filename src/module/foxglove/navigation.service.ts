@@ -89,8 +89,8 @@ export class NavigationService {
   /**
    * 进行标签导航
    * 这里frame_id恒为map
-   * @param label_name 
-   * @returns 
+   * @param label_name
+   * @returns
    */
   async publishMarkingNavigation(label_name: string) {
     this.logger.log('--- start navigation to label ---')
