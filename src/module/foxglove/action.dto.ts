@@ -12,5 +12,4 @@ export class NavigationDto {
 
 export class LabelDto {
   label_name: string
-  frame_id: string
 }

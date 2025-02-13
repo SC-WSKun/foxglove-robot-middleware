@@ -18,6 +18,7 @@ const WebSocket = require('ws')
 @Injectable()
 export class FoxgloveService {
   connected: boolean = false
+  connecting: boolean = false
   client: FoxgloveClient
   subChannels: Map<SubscriptionId, Channel> = new Map() // Map of channels from server advertise
   pubChannels: Map<string, ClientChannelWithoutId & { id: number }> = new Map() // Map of channels from server advertise
@@ -37,7 +38,6 @@ export class FoxgloveService {
     const address =
       url.startsWith('ws://') || url.startsWith('wss://') ? url : `ws://${url}`
     this.logger.log(`Client connecting to ${address}`)
-
     this.client = new FoxgloveClient({
       ws: new WebSocket(address, [FoxgloveClient.SUPPORTED_SUBPROTOCOL]),
     })
@@ -49,12 +49,18 @@ export class FoxgloveService {
 
     this.client.on('close', () => {
       this.logger.log('FoxgloveCLient Connection closed')
+      this.connecting = false
       this.connected = false
+
+      // 重新连接
+      this.retryConnection(address)
     })
 
     this.client.on('error', error => {
       this.logger.log('FoxgloveClient error', error)
-      throw error
+      this.connecting = false
+      // 重新连接
+      this.retryConnection(address)
     })
 
     this.client.on('advertise', channels => {
@@ -194,7 +200,7 @@ export class FoxgloveService {
    * @param payload request params
    * @returns a promise wait for the response
    */
-  callService(srvName: string, payload: { [key: string]: any }): Promise<any> {
+  callService(srvName: string, payload?: { [key: string]: any }): Promise<any> {
     if (!this.client) {
       return Promise.reject('Client not initialized!')
     }
@@ -254,5 +260,18 @@ export class FoxgloveService {
         command: [],
       }
     }
+  }
+
+  /**
+   * retry connection
+   */
+  private retryConnection(url: string) {
+    setTimeout(() => {
+      if (!this.connecting) {
+        this.connecting = true
+        this.logger.log('--- start retry connection ---')
+        this.initClient(url)
+      }
+    }, 10000)
   }
 }

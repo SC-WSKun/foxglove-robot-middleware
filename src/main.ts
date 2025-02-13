@@ -12,6 +12,12 @@ async function bootstrap() {
     bufferLogs: true,
   })
 
+  app.enableCors({
+    origin: '*',
+    methods: 'GET, HEAD, PUT, PATCH, POST, DELETE',
+    credentials: true,
+  })
+
   app.use(
     session({
       secret: config.sessionSecret,

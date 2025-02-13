@@ -8,7 +8,7 @@ import { NavigationService } from './navigation.service'
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [() => require(resolve('src/config/robot-jidi.json'))],
+      load: [() => require(resolve('src/config/robot.json'))],
     }),
   ],
   controllers: [ActionController],
