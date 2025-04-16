@@ -21,6 +21,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "@foxglove/rosmsg": "^5.0.4",
     "@foxglove/rosmsg2-serialization": "^2.0.4",
     "@foxglove/ws-protocol": "^0.7.4",
@@ -33,6 +34,7 @@
     "commander": "^12.1.0",
     "express-session": "^1.18.1",
     "lodash": "^4.17.21",
+    "openai": "^4.94.0",
     "protobufjs": "^7.4.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",

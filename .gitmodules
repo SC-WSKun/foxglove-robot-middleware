@@ -1,3 +1,0 @@
-[submodule "src/server/robot-mcp-server"]
-	path = src/server/robot-mcp-server
-	url = https://github.com/SC-WSKun/robot-mcp-server.git
