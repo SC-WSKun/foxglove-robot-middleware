@@ -18,7 +18,10 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "init:dev": "npm install && npm run init:submodule",
+    "init:submodule": "git submodule update --init && npm run init:robot-mcp-server",
+    "init:robot-mcp-server": "cd src/server/robot-mcp-server && npm install"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
