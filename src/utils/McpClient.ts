@@ -1,30 +1,27 @@
-import {
-  Tool,
-  MessageParam,
-} from '@anthropic-ai/sdk/resources/messages/messages.mjs'
+import { Tool } from '@anthropic-ai/sdk/resources/messages/messages.mjs'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
-import dotenv from 'dotenv'
 import OpenAI from 'openai'
-
-dotenv.config()
-
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
-if (!ANTHROPIC_API_KEY) {
-  throw new Error('ANTHROPIC_API_KEY is not set')
-}
+import qwenConfig from '../config/qwen.json'
+import { ChatCompletionMessageParam } from 'openai/resources/chat'
 
 class MCPClient {
   private mcp: Client
   private qwen: OpenAI
   private transport: StdioClientTransport | null = null
   private tools: Tool[] = []
+  private messages: ChatCompletionMessageParam[] = [
+    {
+      role: 'system',
+      content: '你是一个机器人，名字叫旺财，你可以实现简单的移动',
+    },
+  ]
 
   constructor() {
     this.mcp = new Client({ name: 'mcp-client-cli', version: '1.0.0' })
     this.qwen = new OpenAI({
       // 若没有配置环境变量，请用百炼API Key将下行替换为：apiKey: "sk-xxx",
-      apiKey: process.env.DASHSCOPE_API_KEY,
+      apiKey: qwenConfig.API_KEY,
       baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     })
   }
@@ -51,14 +48,17 @@ class MCPClient {
       const toolsResult = await this.mcp.listTools()
       this.tools = toolsResult.tools.map(tool => {
         return {
-          name: tool.name,
-          description: tool.description,
-          input_schema: tool.inputSchema,
+          type: 'function',
+          function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: tool.inputSchema,
+          },
         }
       })
       console.log(
         'Connected to server with tools:',
-        this.tools.map(({ name }) => name),
+        this.tools.map(({ function: { name } }) => name),
       )
     } catch (e) {
       console.log('Failed to connect to MCP server: ', e)
@@ -66,77 +66,58 @@ class MCPClient {
     }
   }
 
-  async processQuery(query: string) {
-    const messages: MessageParam[] = [
-      {
-        role: 'user',
-        content: query,
-      },
-    ]
-
-    const response = await this.anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 1000,
-      messages,
+  async functionCalling() {
+    const completion = await this.qwen.chat.completions.create({
+      model: 'qwen-plus', // 模型列表：https://help.aliyun.com/zh/model-studio/getting-started/models
+      messages: this.messages,
       tools: this.tools,
     })
 
-    const finalText = []
-    const toolResults = []
+    console.log('返回对象：')
+    console.log(JSON.stringify(completion.choices[0].message))
+    console.log('\n')
+    return completion
+  }
 
-    for (const content of response.content) {
-      if (content.type === 'text') {
-        finalText.push(content.text)
-      } else if (content.type === 'tool_use') {
-        const toolName = content.name
-        const toolArgs = content.input as { [x: string]: unknown } | undefined
+  async processQuery(query: string) {
+    this.messages.push({
+      role: 'user',
+      content: query,
+    })
 
-        const result = await this.mcp.callTool({
-          name: toolName,
-          arguments: toolArgs,
-        })
-        toolResults.push(result)
-        finalText.push(
-          `[Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}]`,
-        )
-
-        messages.push({
-          role: 'user',
-          content: result.content as string,
-        })
-
-        const response = await this.anthropic.messages.create({
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 1000,
-          messages,
-        })
-
-        finalText.push(
-          response.content[0].type === 'text' ? response.content[0].text : '',
-        )
-      }
+    // 由AI判断是否需要调用工具，并给出工具调用的参数
+    const completion = await this.functionCalling()
+    const completionMessage = completion.choices[0].message
+    // qwen如果返回的content不为空，则代表不调用工具，直接返回content
+    if (completionMessage.content) {
+      return completionMessage.content
     }
+    this.messages.push(completionMessage)
+    // 调用工具
+    const toolCalls = completionMessage.tool_calls
+    for (const toolCall of toolCalls) {
+      const toolName = toolCall.function.name
+      const arguments_string = toolCall.function.arguments
+      const args = JSON.parse(arguments_string)
 
-    return finalText.join('\n')
+      const result = await this.mcp.callTool({
+        name: toolName,
+        arguments: args,
+      })
+      console.debug(
+        `[Calling tool ${toolName} with args ${JSON.stringify(args)}]`,
+      )
+
+      this.messages.push({
+        role: 'tool',
+        content: result.content as string,
+        tool_call_id: toolCall.id,
+      })
+    }
+    // 总结工具调用结果
+    const response = await this.functionCalling()
+    return response
   }
 }
 
 export default MCPClient
-
-// export default MCPClient
-async function main() {
-  if (process.argv.length < 3) {
-    console.log('Usage: node index.ts <path_to_server_script>')
-    return
-  }
-  const mcpClient = new MCPClient()
-  try {
-    await mcpClient.connectToServer(process.argv[2])
-    // await mcpClient.chatLoop()
-  } finally {
-    // await mcpClient.cleanup()
-    process.exit(0)
-  }
-}
-
-main()
