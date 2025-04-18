@@ -6,6 +6,10 @@ export class RobotService {
   mcpClient: MCPClient
   constructor() {
     this.mcpClient = new MCPClient()
-    this.mcpClient.connectToServer('src/utils/mcp-server.js')
+    this.mcpClient.connectToServer('src/server/robot-mcp-server/build/index.js')
+  }
+
+  async testQuery(message: string) {
+    return this.mcpClient.processQuery(message)
   }
 }
