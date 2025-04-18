@@ -13,7 +13,8 @@ class MCPClient {
   private messages: ChatCompletionMessageParam[] = [
     {
       role: 'system',
-      content: '你是一个机器人，名字叫旺财，你可以实现简单的移动',
+      content:
+        '你是一个机器人，名字叫旺财，你可以实现简单的移动，以及目标地点导航。对于需要你去某个地点的指令，你需要先使用robot-get-locations获取所有地点信息，找到正确的需要去的地点的名字，再调用robot-navigation工具',
     },
   ]
 
@@ -73,9 +74,8 @@ class MCPClient {
       tools: this.tools,
     })
 
-    console.log('返回对象：')
+    console.log('返回结果：')
     console.log(JSON.stringify(completion.choices[0].message))
-    console.log('\n')
     return completion
   }
 
@@ -84,39 +84,40 @@ class MCPClient {
       role: 'user',
       content: query,
     })
-
-    // 由AI判断是否需要调用工具，并给出工具调用的参数
-    const completion = await this.functionCalling()
-    const completionMessage = completion.choices[0].message
-    // qwen如果返回的content不为空，则代表不调用工具，直接返回content
-    if (completionMessage.content) {
-      return completionMessage.content
+    let queryTime = 0
+    while (queryTime < 3) {
+      // 由AI判断是否需要调用工具，并给出工具调用的参数
+      const completion = await this.functionCalling()
+      const completionMessage = completion.choices[0].message
+      // qwen如果返回的content不为空，则代表不调用工具，直接返回content
+      if (completionMessage.content) {
+        return completionMessage.content
+      }
+      this.messages.push(completionMessage)
+      // 调用工具
+      const toolCalls = completionMessage.tool_calls
+      for (const toolCall of toolCalls) {
+        const toolName = toolCall.function.name
+        const arguments_string = toolCall.function.arguments
+        const args = JSON.parse(arguments_string)
+        const result = await this.mcp.callTool({
+          name: toolName,
+          arguments: args,
+        })
+        console.debug(
+          `[Calling tool ${toolName} with args ${JSON.stringify(args)}]\n`,
+        )
+        this.messages.push({
+          role: 'tool',
+          content: result.content as string,
+          tool_call_id: toolCall.id,
+        })
+      }
+      queryTime++
     }
-    this.messages.push(completionMessage)
-    // 调用工具
-    const toolCalls = completionMessage.tool_calls
-    for (const toolCall of toolCalls) {
-      const toolName = toolCall.function.name
-      const arguments_string = toolCall.function.arguments
-      const args = JSON.parse(arguments_string)
-
-      const result = await this.mcp.callTool({
-        name: toolName,
-        arguments: args,
-      })
-      console.debug(
-        `[Calling tool ${toolName} with args ${JSON.stringify(args)}]`,
-      )
-
-      this.messages.push({
-        role: 'tool',
-        content: result.content as string,
-        tool_call_id: toolCall.id,
-      })
+    return {
+      messages: this.messages,
     }
-    // 总结工具调用结果
-    const response = await this.functionCalling()
-    return response
   }
 }
 
