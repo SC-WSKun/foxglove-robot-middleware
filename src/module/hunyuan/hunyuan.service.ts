@@ -1,4 +1,4 @@
-import { HunyuanMessage } from 'src/typing/global'
+import { HunyuanMessage } from 'src/types/global'
 import { Injectable, Logger } from '@nestjs/common'
 const tencentcloud = require('tencentcloud-sdk-nodejs')
 import { ConfigService } from '@nestjs/config'

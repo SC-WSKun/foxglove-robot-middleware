@@ -1,4 +1,4 @@
-import { Quaternion } from 'src/typing/action'
+import { Quaternion } from 'src/types/action'
 export function generateRandomString32() {
   const characters =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'

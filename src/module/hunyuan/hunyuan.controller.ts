@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common'
 import { UserMessageDto } from 'src/module/hunyuan/hunyuan.dto'
 import { HunyuanService } from 'src/module/hunyuan/hunyuan.service'
-import { HunyuanMessage } from 'src/typing/global'
+import { HunyuanMessage } from 'src/types/global'
 import to from 'await-to-js'
 import { FoxgloveService } from '../foxglove/foxglove.service'
 import { RobotService } from '../foxglove/robot.service'

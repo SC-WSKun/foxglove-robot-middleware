@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { FoxgloveService } from './foxglove.service'
-import { Move, Position, RobotSpeed } from 'src/typing/action'
+import { Move, Position, RobotSpeed } from 'src/types/action'
 import to from 'await-to-js'
 import { quaternionToEuler } from 'src/utils/util'
 import { NavigationService } from './navigation.service'

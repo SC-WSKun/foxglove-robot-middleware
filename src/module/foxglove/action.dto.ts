@@ -1,4 +1,4 @@
-import { NavTranslation, NavRotation } from 'src/typing/action'
+import { NavTranslation, NavRotation } from 'src/types/action'
 export class ActionDto {
   action: string
   data: string
