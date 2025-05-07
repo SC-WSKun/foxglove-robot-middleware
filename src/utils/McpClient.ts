@@ -79,6 +79,7 @@ class MCPClient {
     return completion
   }
 
+  // todo: 现在只有一个client，需要引入根据前缀判断执行对应的mcpserver的能力
   async processQuery(query: string) {
     this.messages.push({
       role: 'user',
