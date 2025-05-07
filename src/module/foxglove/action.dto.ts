@@ -1,4 +1,3 @@
-import { NavTranslation, NavRotation } from 'src/types/action'
 export class ActionDto {
   action: string
   data: string

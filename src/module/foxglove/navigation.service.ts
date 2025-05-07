@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { FoxgloveService } from './foxglove.service'
 import to from 'await-to-js'
-import { NavRotation, NavTranslation } from 'src/types/action'
 
 @Injectable()
 export class NavigationService {
