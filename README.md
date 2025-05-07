@@ -7,6 +7,8 @@
 
 后续这一层应该以鉴权为主，然后调度不同的agent去实现大模型服务
 
+取消 MCP Server 的 Stdio 模式，后续将所有 MCP Server 迁移到专用的 Jetson Nano 板上
+
 
 
 ## 环境准备

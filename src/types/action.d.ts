@@ -1,40 +1,38 @@
-export const action = ['subscribeTopic', 'movingPrepare']
-
-export type RobotSpeed = {
+ type RobotSpeed = {
   angularSpeed: number
   linearSpeed: number
 }
 
-export type Move = {
+ type Move = {
   angular: number
   linear: number
 }
 
-export type TargetPosition = {
+ type TargetPosition = {
   angular: number
   linear: number
 }
 
-export type Position = {
+ type Position = {
   x: number
   y: number
   z: number
 }
 
-export type Quaternion = {
+ type Quaternion = {
   w: number
   x: number
   y: number
   z: number
 }
 
-export type NavTranslation = {
+ type NavTranslation = {
   x: number
   y: number
   z: number
 } | null
 
-export type NavRotation = {
+ type NavRotation = {
   x: number
   y: number
   z: number

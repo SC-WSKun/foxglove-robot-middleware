@@ -5,7 +5,6 @@ import {
   Logger,
   Post,
 } from '@nestjs/common'
-import { RobotSpeed } from 'src/types/action'
 import { RobotService } from './robot.service'
 import to from 'await-to-js'
 import { NavigationService } from './navigation.service'

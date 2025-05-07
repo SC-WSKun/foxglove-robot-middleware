@@ -60,3 +60,5 @@ src/config/*
 
 # submodule
 # src/server/
+
+.env
