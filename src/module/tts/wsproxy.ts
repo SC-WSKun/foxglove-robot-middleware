@@ -101,7 +101,7 @@ export class AudioStreamGateway implements OnGatewayConnection {
         voice_type: 'zh_female_roumeinvyou_emo_v2_mars_bigtts',
         encoding: 'mp3',
         speed_ratio: 1.0,
-        volume_ratio: 1.0,
+        loudness_ratio: 2.0,
         pitch_ratio: 1.0,
       },
       request: { reqid, text: data, text_type: 'plain', operation: 'submit' },
