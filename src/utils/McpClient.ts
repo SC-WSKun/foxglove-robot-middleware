@@ -116,9 +116,7 @@ class MCPClient {
       }
       queryTime++
     }
-    return {
-      messages: this.messages,
-    }
+    return 'Sorry, I am not able to process your request because the task is so complicated.'
   }
 }
 
