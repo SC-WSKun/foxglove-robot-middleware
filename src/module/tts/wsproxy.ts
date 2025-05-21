@@ -10,6 +10,7 @@ import { Server, Socket } from 'socket.io' // 用socket.io更灵活
 import WebSocket from 'ws'
 import crypto from 'crypto'
 import zlib from 'zlib'
+import { RobotService } from '../robot/robot.service'
 
 function createWebSocketToVolcEngine(): WebSocket {
   return new WebSocket('wss://openspeech.bytedance.com/api/v1/tts/ws_binary', {
@@ -29,6 +30,8 @@ export class AudioStreamGateway implements OnGatewayConnection {
   server: Server
 
   private volcSockets = new Map<string, WebSocket>() // 保存每个client对应的火山WebSocket
+
+  constructor(private readonly robotService: RobotService) {}
 
   async handleConnection(client: Socket) {
     // 这里可以直接连火山引擎WebSocket
@@ -64,12 +67,8 @@ export class AudioStreamGateway implements OnGatewayConnection {
     }
   }
 
-  @SubscribeMessage('send-tts-data') // 监听前端发过来的"文字"
-  async handleTtsRequest(
-    @MessageBody() data: any,
-    @ConnectedSocket() client: Socket,
-  ) {
-    console.log('Received TTS request from client:', data)
+  generateHeader() {
+    // 组装TTS头部
     const options = {
       protocolVersion: 0b0001,
       headerSizeFlag: 0b0001, // 4 bytes
@@ -78,7 +77,7 @@ export class AudioStreamGateway implements OnGatewayConnection {
       serializationMethod: 0,
       compressionMethod: 0b0001,
     }
-    const header = new Uint8Array(4) // 4字节固定header
+    const header = new Uint8Array(4)
     // 第0字节
     header[0] =
       (options.protocolVersion << 4) | (options.headerSizeFlag & 0b1111)
@@ -89,6 +88,11 @@ export class AudioStreamGateway implements OnGatewayConnection {
       (options.serializationMethod << 4) | (options.compressionMethod & 0b1111)
     // 第3字节
     header[3] = 0x00 // Reserved，目前设为0
+
+    return header
+  }
+
+  generatePayload(text: string) {
     const reqid = crypto.randomUUID()
     const payload = {
       app: {
@@ -104,7 +108,7 @@ export class AudioStreamGateway implements OnGatewayConnection {
         loudness_ratio: 2.0,
         pitch_ratio: 1.0,
       },
-      request: { reqid, text: data, text_type: 'plain', operation: 'submit' },
+      request: { reqid, text, text_type: 'plain', operation: 'submit' },
     }
     console.log(payload)
     const payloadStr = JSON.stringify(payload)
@@ -115,7 +119,55 @@ export class AudioStreamGateway implements OnGatewayConnection {
     // 长度字段 (4字节, 大端)
     const payloadLengthBuffer = Buffer.alloc(4)
     payloadLengthBuffer.writeUInt32BE(compressedPayload.length, 0) // 大端写入
+    return {
+      compressedPayload,
+      payloadLengthBuffer,
+    }
+  }
 
+  /**
+   * 直接语音合成
+   * @param data 待合成的文字
+   * @param client 和客户端链接的ws
+   */
+  @SubscribeMessage('send-tts-data')
+  async handleTtsRequest(
+    @MessageBody() data: any,
+    @ConnectedSocket() client: Socket,
+  ) {
+    console.log('Received TTS request from client:', data)
+    const header = this.generateHeader()
+    const { compressedPayload, payloadLengthBuffer } =
+      this.generatePayload(data)
+
+    // 最终包
+    const message = Buffer.concat([
+      header,
+      payloadLengthBuffer,
+      compressedPayload,
+    ]) // 合并header和payload
+
+    const volcSocket = this.volcSockets.get(client.id)
+    if (volcSocket && volcSocket.readyState === WebSocket.OPEN) {
+      volcSocket.send(message) // 把数据发给火山引擎
+    } else {
+      console.warn('VolcEngine WS is not ready for client:', client.id)
+    }
+  }
+
+  /**
+   * 执行大模型问答后，返回合成好的音频
+   */
+  @SubscribeMessage('send-tts-data-after-robot')
+  async handleTtsRequestAfterRobot(
+    @MessageBody() data: any,
+    @ConnectedSocket() client: Socket,
+  ) {
+    console.log('Received TTS request from client:', data)
+    const answer = await this.robotService.testQuery(data)
+    const header = this.generateHeader()
+    const { compressedPayload, payloadLengthBuffer } =
+      this.generatePayload(answer)
     // 最终包
     const message = Buffer.concat([
       header,

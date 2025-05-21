@@ -12,5 +12,6 @@ import { resolve } from 'path'
   ],
   controllers: [RobotController],
   providers: [RobotService],
+  exports: [RobotService],
 })
 export class RobotModule {}
