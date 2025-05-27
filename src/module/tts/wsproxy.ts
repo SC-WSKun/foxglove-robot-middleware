@@ -11,6 +11,7 @@ import WebSocket from 'ws'
 import crypto from 'crypto'
 import zlib from 'zlib'
 import { RobotService } from '../robot/robot.service'
+import { Injectable } from '@nestjs/common'
 
 function createWebSocketToVolcEngine(): WebSocket {
   return new WebSocket('wss://openspeech.bytedance.com/api/v1/tts/ws_binary', {
@@ -18,6 +19,7 @@ function createWebSocketToVolcEngine(): WebSocket {
   })
 }
 
+@Injectable()
 @WebSocketGateway(3001, {
   cors: {
     origin: '*', // 允许跨域，前端才能连进来
@@ -30,6 +32,8 @@ export class AudioStreamGateway implements OnGatewayConnection {
   server: Server
 
   private volcSockets = new Map<string, WebSocket>() // 保存每个client对应的火山WebSocket
+
+  private androidBoardClientId = ""
 
   constructor(private readonly robotService: RobotService) {}
 
@@ -56,6 +60,7 @@ export class AudioStreamGateway implements OnGatewayConnection {
     })
 
     this.volcSockets.set(client.id, volcSocket)
+    this.androidBoardClientId = client.id
   }
 
   async handleDisconnect(client: Socket) {
@@ -180,6 +185,26 @@ export class AudioStreamGateway implements OnGatewayConnection {
       volcSocket.send(message) // 把数据发给火山引擎
     } else {
       console.warn('VolcEngine WS is not ready for client:', client.id)
+    }
+  }
+
+  async ttsRequestFromOtherService(text: string){
+    const answer = await this.robotService.testQuery(text)
+    const header = this.generateHeader()
+    const { compressedPayload, payloadLengthBuffer } =
+      this.generatePayload(answer)
+    // 最终包
+    const message = Buffer.concat([
+      header,
+      payloadLengthBuffer,
+      compressedPayload,
+    ]) // 合并header和payload
+
+    const volcSocket = this.volcSockets.get(this.androidBoardClientId)
+    if (volcSocket && volcSocket.readyState === WebSocket.OPEN) {
+      volcSocket.send(message) // 把数据发给火山引擎
+    } else {
+      console.warn('VolcEngine WS is not ready for client:', this.androidBoardClientId)
     }
   }
 }
