@@ -1,3 +1,7 @@
+/**
+ * 本模块用于做火山引Websocket代理，因为RN不支持在WS中传输Authorization，需要编写本地模块，算是取巧的做法。
+ * 后来Expo更新了Expo-Speech，这个方案已被遗弃，仅做留存参考
+ */
 import {
   WebSocketGateway,
   WebSocketServer,

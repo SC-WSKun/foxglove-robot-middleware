@@ -9,7 +9,7 @@ import { TtsModule } from './module/tts/tts.module'
 @Module({
   imports: [
     // HunyuanModule,
-    // FoxgloveModule,
+    FoxgloveModule,
     // HotspotModule,
     // LabelModule,
     RobotModule,
