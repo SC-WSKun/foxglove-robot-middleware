@@ -30,4 +30,5 @@ npm run start
 ```
 
 ## API Doc
-链接: https://g6ce0748se.apifox.cn
+链接: https://g6ce0748se.apifox.cn/
+密码: scutb3351
