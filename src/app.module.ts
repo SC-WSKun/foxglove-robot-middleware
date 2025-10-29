@@ -13,7 +13,7 @@ import { TtsModule } from './module/tts/tts.module'
     // HotspotModule,
     // LabelModule,
     RobotModule,
-    TtsModule,
+    // TtsModule,
   ],
   controllers: [],
   providers: [],
