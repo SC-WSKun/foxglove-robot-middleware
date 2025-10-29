@@ -39,7 +39,9 @@ export class FoxgloveService {
       url.startsWith('ws://') || url.startsWith('wss://') ? url : `ws://${url}`
     this.logger.log(`Client connecting to ${address}`)
     this.client = new FoxgloveClient({
-      ws: new WebSocket(address, [FoxgloveClient.SUPPORTED_SUBPROTOCOL]),
+      // 20251029: foxglove-bridge 更新后子协议更名为'foxglove.sdk.v1'
+      // 由于 ws-protocol 不再进行维护，需要手动指定子协议
+      ws: new WebSocket(address, ['foxglove.sdk.v1']),
     })
 
     this.client.on('open', () => {
